@@ -6,7 +6,7 @@
 - MQTT publishing/subscribing to integrate with various Home Automation systems (like Apple HomeKit, using HomeBridge and etc.)
 - Update via OTA
 - Update via Telegram
-- Fully configurable via WEB interface and/or Telegram Bot commands (except OTA credentials)
+- Fully configurable via WEB interface and/or Telegram Bot commands (except OTA credentials, password are in `src/ota_secret.h`)
 - Power-up, then power-down in 10 seconds and power-up again will initiate WiFi Manager and device will be accessible as WiFi Access Point, with captive portan enabled (192.168.4.1) to connect device to WiFi network. Same behavior will be enabled in device is "new" and don't have any WiFi credentials stored.
 
 # Connections and Wiring
