@@ -1,5 +1,6 @@
 //#include <Arduino.h>
 
+#include <ota_secret.h>
 #include <settings.h>
 
 #define ESP_DRD_USE_EEPROM      false
@@ -391,7 +392,7 @@ void setup() {
   // ArduinoOTA.setHostname("myesp8266");
 
   // Authentication passwrord (default: no auth)
-  ArduinoOTA.setPassword("your_secret_password");
+  ArduinoOTA.setPassword(OTA_PASSWORD);
 
   // Password can be set with it's md5 value as well
   // MD5(admin) = 
