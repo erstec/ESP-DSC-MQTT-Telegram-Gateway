@@ -247,7 +247,9 @@ void setup() {
   //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
 
-//  wifiManager.setHostname("esp32");
+  // set Hostname
+  String hostname = "ESP-DSC-" + String((uint32_t)(ESP.getEfuseMac() >> 32), HEX);
+  wifiManager.setHostname(hostname.c_str());
 
   //set config save notify callback
   wifiManager.setSaveConfigCallback(saveConfigCallback);
@@ -257,6 +259,9 @@ void setup() {
   
   //reset settings - for testing
   //wifiManager.resetSettings();
+
+  // set dark theme
+  wifiManager.setClass("invert");
 
   //set minimu quality of signal so it ignores AP's under that quality
   //defaults to 8%
@@ -305,6 +310,8 @@ void setup() {
 
   //if you get here you have connected to the WiFi
   Serial.println("connected...yeey");
+
+  // WiFi.onEvent(WiFiStationDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
 
   if (MDNS.begin("esp32")) {              // Start the mDNS responder for esp8266.local
     Serial.println("mDNS responder started");
@@ -447,6 +454,14 @@ void setup() {
 //  MDNS.addService("http", "tcp", 80);
 }
 
+// void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info){
+//   Serial.println("Disconnected from WiFi access point");
+//   Serial.println("Trying to Reconnect");
+//   wifiConnected = false;
+//   dsc.pauseStatus = true;
+//   WiFi.reconnect();
+// }
+
 void loop() {
   if (!saveResult) {
     wdt_reset();
@@ -471,6 +486,9 @@ void loop() {
     Serial.println("WiFi disconnected");
     wifiConnected = false;
     dsc.pauseStatus = true;
+    Serial.println("Reconnecting to WiFi...");
+    WiFi.disconnect();
+    WiFi.reconnect();
   }
 
 #if defined(USE_MQTT)

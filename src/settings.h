@@ -1,7 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-const char* version = "1.7.4";
+const char* version = "1.7.5";
 
 #define USE_MQTT
 #define USE_TELEGRAM
