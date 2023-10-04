@@ -1,23 +1,9 @@
 //#include <Arduino.h>
 
+#include <SPIFFS.h>
+
 #include <ota_secret.h>
 #include <settings.h>
-
-#define ESP_DRD_USE_EEPROM      false
-#define ESP_DRD_USE_SPIFFS      true
-
-#define DOUBLERESETDETECTOR_DEBUG       true  //false
-
-#include <ESP_DoubleResetDetector.h>      //https://github.com/khoih-prog/ESP_DoubleResetDetector
-
-// Number of seconds after reset during which a 
-// subseqent reset will be considered a double reset.
-#define DRD_TIMEOUT 10
-
-// RTC Memory Address for the DoubleResetDetector to use
-#define DRD_ADDRESS 0
-
-DoubleResetDetector* drd;
 
 // For ESP32
 #ifndef LED_BUILTIN
@@ -180,8 +166,6 @@ tsConfig _config[] = {
 
 #define COMMON_NUMEL(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
-bool doubleResetDetected = false;
-
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -190,21 +174,6 @@ void setup() {
 
   wdt_enable(WDT_TMO);
   
-  drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
-
-  if (drd->detectDoubleReset()) 
-  {
-    Serial.println("Double Reset Detected");
-    digitalWrite(LED_BUILTIN, LED_ON);
-    doubleResetDetected = true;
-  } 
-  else 
-  {
-    Serial.println("No Double Reset Detected");
-    digitalWrite(LED_BUILTIN, LED_OFF);
-    doubleResetDetected = false;
-  }
-
   //read configuration from FS json
   Serial.println("mounting FS...");
 
@@ -273,35 +242,21 @@ void setup() {
   wifiManager.setTimeout(300);
   wifiManager.setConfigPortalTimeout(300);
 
-  if (doubleResetDetected == true) {
-    wdt_disable();
-    if (!wifiManager.startConfigPortal()) {
-      Serial.println("failed to connect and hit timeout");
-      delay(3000);
-      //reset and try again, or maybe put it to deep sleep
-      ESP.restart();
-      delay(5000);
-    } else {
-      Serial.println("Config portal ended");
-      //ESP.restart();
-    }
-  } else {
+  wdt_reset();
+  //fetches ssid and pass and tries to connect
+  //if it does not connect it starts an access point with the specified name
+  //here  "AutoConnectAP"
+  //and goes into a blocking loop awaiting configuration
+//  if (!wifiManager.autoConnect("AutoConnectAP", "password")) {
+  if (!wifiManager.autoConnect()) {
+    Serial.println("failed to connect and hit timeout");
     wdt_reset();
-    //fetches ssid and pass and tries to connect
-    //if it does not connect it starts an access point with the specified name
-    //here  "AutoConnectAP"
-    //and goes into a blocking loop awaiting configuration
-  //  if (!wifiManager.autoConnect("AutoConnectAP", "password")) {
-    if (!wifiManager.autoConnect()) {
-      Serial.println("failed to connect and hit timeout");
-      wdt_reset();
-      delay(3000);
-      //reset and try again, or maybe put it to deep sleep
-      ESP.restart();
-      delay(5000);
-    } else {
-      Serial.println("AutoConnect ended");
-    }
+    delay(3000);
+    //reset and try again, or maybe put it to deep sleep
+    ESP.restart();
+    delay(5000);
+  } else {
+    Serial.println("AutoConnect ended");
   }
 
   if (shouldSaveConfig) {
@@ -467,12 +422,6 @@ void loop() {
     wdt_reset();
   }
   
-  if (drd->loop()) {
-    dsc.stop();
-    drd->stop();
-    dsc.begin();
-  }
-
   //MDNS.update();
 
   // Updates status if WiFi drops and reconnects
@@ -1400,7 +1349,7 @@ void handleTelegram(byte telegramMessages) {
 
       s += "Partition status:\n";
 
-      for (byte partition = 0; partition < dscPartitions; partition++) {
+      for (byte partition = 0; partition < PARTITION_COUNT; partition++) {
         s += "Partition ";
         s += partition + 1;
         s += " ";
@@ -1546,8 +1495,12 @@ void handleTelegram(byte telegramMessages) {
       
       s += "---\n";
       s += "PGMs:\n";
-      for (byte pgmGroup = 0; pgmGroup < 2; pgmGroup++) {
-        for (byte pgmBit = 0; pgmBit < 8; pgmBit++) {
+
+      byte _pgmGroups = (PGM_COUNT > 8) ? 2 : 1;
+      byte _pgmCount = PGM_COUNT;
+
+      for (byte pgmGroup = 0; pgmGroup < _pgmGroups; pgmGroup++) {
+        for (byte pgmBit = 0; pgmBit < _pgmCount; pgmBit++) {
           char pgm[3];
           itoa(pgmBit + 1 + (pgmGroup * 8), pgm, 10);
           s += pgm;

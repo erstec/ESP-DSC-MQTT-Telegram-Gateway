@@ -1,7 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-const char* version = "1.7.5";
+const char* version = "1.8.2";
 
 #define USE_MQTT
 #define USE_TELEGRAM
@@ -18,5 +18,8 @@ const char* version = "1.7.5";
 #define TELEGRAM_MSG_PREFIX_LEN 40
 
 #define DSC_ACCESS_CODE_LEN     5
+
+#define PGM_COUNT               4
+#define PARTITION_COUNT         2
 
 #endif
